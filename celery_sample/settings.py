@@ -8,15 +8,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
+import urlparse
 import djcelery
 import sys
 djcelery.setup_loader()
-
 reload(sys)
+
 # This is to satisfy static code checking tool.  reload(sys) adds certain
 # methods at runtime
 sys1 = sys
 sys1.setdefaultencoding('utf-8')
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -24,29 +26,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
-# 
-# # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = '!3t=hhjsx09x8ly19%-zyf44dl4x82k3p4^3l+3#64)1@mzwf='
+#
 SECRET_KEY = '12121121121212'
-# 
-# # SECURITY WARNING: don't run with debug turned on in production!
+#
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 TEMPLATE_DEBUG = True
-
 ALLOWED_HOSTS = []
 
-
-# Application definition
-
-INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-)
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -58,6 +45,14 @@ MIDDLEWARE_CLASSES = (
 )
 
 
+# Application definition
+INSTALLED_APPS = (
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+)
 # This setting is used by django-jenkins to know which are
 # tests written by Gnana
 PROJECT_APPS = ('domainmodel', 'celerytasks', 'commands')
@@ -65,7 +60,7 @@ PROJECT_APPS = ('domainmodel', 'celerytasks', 'commands')
 BORROWED_APPS = (
     'gunicorn',
     'bootstrap3',
-#     'keymanager',
+    #     'keymanager',
     'djcelery',  # Remove this again when we move to 3.1+
     'south'
 )
@@ -79,9 +74,9 @@ ROOT_URLCONF = 'celery_sample.urls'
 WSGI_APPLICATION = 'celery_sample.wsgi.application'
 
 SITE_ROOT = os.path.normpath(
-                    os.path.join(
-                        os.path.dirname(os.path.realpath(__file__)
-                    ), '..'))
+    os.path.join(
+        os.path.dirname(os.path.realpath(__file__)
+                        ), '..'))
 CNAME = os.environ.get('GNANA_CNAME', "localhost")
 
 # Database
@@ -116,6 +111,8 @@ STATIC_URL = '/static/'
 # added newly
 TRUE_VALUES = {'true', '1', 'yes', 'yeah', 'si',
                'youbet', 'good', 'positive'}
+
+
 def is_true(bool_like):
     if(isinstance(bool_like, basestring)):
         return bool_like.lower() in TRUE_VALUES
@@ -123,27 +120,26 @@ def is_true(bool_like):
         return True
     return False
 
+
 mongo_db_url = 'mongodb://gnana:gnana@localhost:27017/gnana'
-
-CELERY_IMPORTS = ['celerytasks.tasker.gtasks']
-CELERYD_POOL_RESTARTS = True
-CELERY_RESULT_BACKEND = 'mongodb'
-
-
-import urlparse
 mongo_db_url_parsed = urlparse.urlparse(mongo_db_url)
 if('mongo-db-name' not in os.environ):
     # Use the DBname from url
     dbname = mongo_db_url_parsed.path.strip('/')
     os.environ['mongo-db-name'] = dbname
 
+
 BROKER_URL = os.environ.get('CELERY_BROKER', mongo_db_url)
+CELERY_IMPORTS = ['celerytasks.tasker.gtasks']
+CELERYD_POOL_RESTARTS = True
+CELERY_RESULT_BACKEND = 'mongodb'
+
 
 CELERY_MONGODB_BACKEND_SETTINGS = {
     "host": mongo_db_url,
-#     "port": mongo_db_url_parsed.port,
-#     "user": mongo_db_url_parsed.username,
-#     "password": mongo_db_url_parsed.password,
+    #     "port": mongo_db_url_parsed.port,
+    #     "user": mongo_db_url_parsed.username,
+    #     "password": mongo_db_url_parsed.password,
     "database": os.environ.get('mongo-db-name', 'gnana'),
     "taskmeta_collection": "task_results",
 }
@@ -156,16 +152,17 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 # }
 
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'application/json', 'application/x-python-serialize']
+CELERY_ACCEPT_CONTENT = [
+    'json', 'pickle', 'application/json', 'application/x-python-serialize']
 
 CELERYD_HIJACK_ROOT_LOGGER = False
-if os.environ.get('KEEP_CELERY_ALIVE',False):
+if os.environ.get('KEEP_CELERY_ALIVE', False):
     CELERYD_MAX_TASKS_PER_CHILD = 1000
 else:
     CELERYD_MAX_TASKS_PER_CHILD = 1
 CELERYD_PREFETCH_MULTIPLIER = 1
 CELERYD_FORCE_EXECV = True
-# 
+#
 # CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
 # from datetime import timedelta
 # CELERYBEAT_SCHEDULE = {
@@ -183,7 +180,6 @@ if BROKER_USE_SSL:
     CELERY_SECURITY_KEY = os.environ.get('SSL_KEY', None)
     CELERY_SECURITY_CERTIFICATE = os.environ.get('SSL_CERT', None)
     CELERY_SECURITY_CERT_STORE = os.environ.get('SSL_STORE', None)
-
 
 
 from logging import Formatter
@@ -225,9 +221,9 @@ LOGGING = {
     },
     'loggers': {
         '': {
-             'handlers': ['console'],
-             'level': 'ERROR',
-         },
+            'handlers': ['console'],
+            'level': 'ERROR',
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
@@ -279,7 +275,8 @@ for i in range(5):
         mongo_con = MongoClient(mongo_db_url)[os.environ['mongo-db-name']]
         RS_NAME = os.environ.get('RS_NAME', None)
         if RS_NAME is not None:
-            mongo_con = MongoReplicaSetClient(mongo_db_url, replicaSet=RS_NAME)[mongo_db_url.split('/')[-1]]
+            mongo_con = MongoReplicaSetClient(
+                mongo_db_url, replicaSet=RS_NAME)[mongo_db_url.split('/')[-1]]
         gnana_db = GnanaMongoDB(mongo_con)
     except Exception as e:
         logger.exception("Unable to connect with the main mongodb: " + str(e))
@@ -287,14 +284,14 @@ for i in range(5):
     if gnana_db is not None:
         break
     logger.info("Retrying Mongodb Connection " + str(gnana_db))
-    time.sleep(i*5)
-    
+    time.sleep(i * 5)
+
 if not DEBUG and gnana_db is None:
     logger.info("Exiting as we are unable to connect with mongodb")
     sys.exit(1)
 else:
     logger.info('Mongo is available')
-    
+
 pathprefix = os.environ['HOME'] + '/tenants'
 from utils.storage import GnanaFileStorage
 gnana_storage = GnanaFileStorage()
